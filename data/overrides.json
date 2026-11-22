@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "note": "人工维护的差异表：只写与语言文件不一致的部分。新增键会自动出现，不需要登记；名字歧义、别名、语言文件缺键才写在这里。",
+  "groups": [
+    "main",
+    "buildings",
+    "moodles",
+    "other"
+  ],
+  "excludeSuffixes": [
+    "dsc"
+  ],
+  "entries": {
+    "buildings/beartrap": {
+      "name": "捕兽夹",
+      "note": "语言文件里叫「老旧机械」，此处改写",
+      "aliases": [
+        "老旧机械"
+      ]
+    },
+    "buildings/corpse": {
+      "name": "尸体",
+      "note": "语言文件里叫「？？？」，与 1 个条目重名，这里用更具体的名字",
+      "aliases": [
+        "？",
+        "？？？"
+      ]
+    },
+    "buildings/crystalbig": {
+      "name": "水晶（大）",
+      "note": "语言文件里叫「水晶」，此处改写",
+      "aliases": [
+        "水晶"
+      ]
+    },
+    "buildings/crystalmassive": {
+      "name": "水晶（巨大）",
+      "note": "语言文件里叫「水晶」，此处改写",
+      "aliases": [
+        "水晶"
+      ]
+    },
+    "buildings/crystalmedium": {
+      "name": "水晶（中）",
+      "note": "语言文件里叫「水晶」，此处改写",
+      "aliases": [
+        "水晶"
+      ]
+    },
+    "buildings/crystalmini": {
+      "name": "水晶（迷你）",
+      "note": "语言文件里叫「水晶」，此处改写",
+      "aliases": [
+        "水晶"
+      ]
+    },
+    "buildings/crystalsmall": {
+      "name": "水晶（小）",
+      "note": "语言文件里叫「水晶」，此处改写",
+      "aliases": [
+        "水晶"
+      ]
+    },
+    "buildings/fan": {
+      "name": "风扇",
+      "note": "语言文件里叫「老旧机械」，此处改写",
+      "aliases": [
+        "老旧机械"
+      ]
+    },
+    "buildings/jumppad": {
+      "name": "弹跳板",
+      "note": "语言文件里叫「老旧机械」，此处改写",
+      "aliases": [
+        "老旧机械"
+      ]
+    },
+    "buildings/laserdrone": {
+      "name": "冷冻无人机",
+      "note": "语言文件里叫「物资箱」，与 1 个条目重名，这里用更具体的名字",
+      "aliases": [
+        "物资箱"
+      ]
+    },
+    "buildings/lavageyser": {
+      "name": "岩浆间歇泉",
+      "note": "语言文件里叫「间歇泉」，此处改写",
+      "aliases": [
+        "间歇泉"
+      ]
+    },
+    "buildings/piston": {
+      "name": "活塞",
+      "note": "语言文件里叫「老旧机械」，此处改写",
+      "aliases": [
+        "老旧机械"
+      ]
+    },
+    "buildings/shuttledoor": {
+      "aliases": [
+        "穿梭舱门"
+      ],
+      "note": "旧名/别名，供编辑器匹配历史写法"
+    },
+    "buildings/shuttleelevator": {
+      "aliases": [
+        "穿梭舱电梯"
+      ],
+      "note": "旧名/别名，供编辑器匹配历史写法"
+    },
+    "buildings/spikestabber": {
+      "name": "尖刺陷阱",
+      "note": "语言文件里叫「老旧机械」，此处改写",
+      "aliases": [
+        "老旧机械"
+      ]
+    },
+    "buildings/stalagmitedark": {
+      "name": "石笋（深色）",
+      "note": "语言文件里叫「石笋」，此处改写",
+      "aliases": [
+        "石笋"
+      ]
+    },
+    "other/nanotechdepthinitialleft": {
+      "aliases": [
+        "在该区域左侧检测到纳米科技信号..."
+      ],
+      "note": "旧名/别名，供编辑器匹配历史写法"
+    },
+    "other/nanotechdepthinitialright": {
+      "aliases": [
+        "在该区域右侧检测到纳米科技信号..."
+      ],
+      "note": "旧名/别名，供编辑器匹配历史写法"
+    },
+    "other/radwater": {
+      "name": "过滤水（辐射水）",
+      "note": "语言文件里叫「过滤水」，此处改写",
+      "aliases": [
+        "过滤水"
+      ]
+    },
+    "other/tutcraft10": {
+      "aliases": [
+        "更重要的事——你可以收藏一个配方以使其永久在屏幕一角显示，利用制作菜单右下角的图钉按钮以收藏配方。现在收藏“脆弱的刀”配方。"
+      ],
+      "note": "旧名/别名，供编辑器匹配历史写法"
+    },
+    "other/urine": {
+      "name": "柠檬水（尿）",
+      "note": "语言文件里叫「柠檬水」，此处改写",
+      "aliases": [
+        "柠檬水"
+      ]
+    }
+  },
+  "additions": [
+    {
+      "id": "bloodsuckerden",
+      "group": "buildings",
+      "name": "吸血巢",
+      "aliases": [
+        "bloodsuckerden"
+      ],
+      "note": "语言文件里没有这个键，游戏内以预制体名出现"
+    }
+  ]
+}
