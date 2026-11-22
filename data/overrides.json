@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "note": "人工维护的差异表：只写与语言文件不一致的部分。新增键会自动出现，不需要登记；名字歧义、别名、语言文件缺键才写在这里。",
+  "note": "人工维护的差异表：只写与语言文件不一致的部分。新增键会自动出现；名字歧义、别名、语言文件缺键、以及需要换 id 的条目（地层标题）才写在这里。",
   "groups": [
     "main",
     "buildings",
     "moodles",
     "other"
   ],
-  "excludeSuffixes": [
-    "dsc"
+  "descriptionMarker": "dsc",
+  "descriptionModifiers": [
+    "alt",
+    "used",
+    "fixed",
+    "dead",
+    "dropped"
   ],
   "entries": {
     "buildings/beartrap": {
@@ -153,6 +158,60 @@
       "aliases": [
         "柠檬水"
       ]
+    },
+    "other/layertitle1": {
+      "id": "gravel_lands",
+      "note": "语言键 layertitle1 是第 1 层的标题；换成真实地层 id，才能和 {{地层|id=gravel_lands}} 对齐"
+    },
+    "other/layertitle2": {
+      "id": "deeper_gravel_lands",
+      "note": "语言键 layertitle2 是第 2 层的标题；换成真实地层 id，才能和 {{地层|id=deeper_gravel_lands}} 对齐"
+    },
+    "other/layertitle3": {
+      "id": "dried_desert",
+      "note": "语言键 layertitle3 是第 3 层的标题；换成真实地层 id，才能和 {{地层|id=dried_desert}} 对齐"
+    },
+    "other/layertitle4": {
+      "id": "wasteland",
+      "note": "语言键 layertitle4 是第 4 层的标题；换成真实地层 id，才能和 {{地层|id=wasteland}} 对齐"
+    },
+    "other/layertitle5": {
+      "id": "overgrown_depths",
+      "note": "语言键 layertitle5 是第 5 层的标题；换成真实地层 id，才能和 {{地层|id=overgrown_depths}} 对齐"
+    },
+    "other/layertitle6": {
+      "id": "frozen_chasm",
+      "note": "语言键 layertitle6 是第 6 层的标题；换成真实地层 id，才能和 {{地层|id=frozen_chasm}} 对齐"
+    },
+    "other/layertitle7": {
+      "id": "fungal_pools",
+      "note": "语言键 layertitle7 是第 7 层的标题；换成真实地层 id，才能和 {{地层|id=fungal_pools}} 对齐"
+    },
+    "other/layertitle8": {
+      "id": "crystalline_hollow",
+      "note": "语言键 layertitle8 是第 8 层的标题；换成真实地层 id，才能和 {{地层|id=crystalline_hollow}} 对齐"
+    },
+    "other/layertitle9": {
+      "id": "geothermal_vents",
+      "note": "语言键 layertitle9 是第 9 层的标题；换成真实地层 id，才能和 {{地层|id=geothermal_vents}} 对齐"
+    },
+    "other/layertitle10": {
+      "id": "where_we_must_reach",
+      "note": "语言键 layertitle10 是第 10 层的标题；换成真实地层 id，才能和 {{地层|id=where_we_must_reach}} 对齐；原值「必 须 抵 达 之 地」带字间空格，这里去掉",
+      "name": "必须抵达之地"
+    },
+    "other/layertitle11": {
+      "id": "crimson_ascent",
+      "note": "语言键 layertitle11 是第 11 层的标题；换成真实地层 id，才能和 {{地层|id=crimson_ascent}} 对齐"
+    },
+    "other/layertitle12": {
+      "id": "earth",
+      "note": "语言键 layertitle12 是第 12 层的标题；换成真实地层 id，才能和 {{地层|id=earth}} 对齐；原值带换行与后缀（「地球\\n某个实验室...」），这里只留地层名",
+      "name": "地球"
+    },
+    "other/layertitletutorial": {
+      "exclude": true,
+      "note": "教学关的标题（「地球\\n训练实验室」），不是地层 id；保留会和第 12 层重复"
     }
   },
   "additions": [

@@ -85,6 +85,28 @@ class RuleTests(unittest.TestCase):
         self.assertNotIn("note", gen_idlookup.dumps(left))
 
 
+class DescriptionTests(unittest.TestCase):
+    KEYS = {"fan", "trader", "lcdscreen", "woodscraps", "endscreenstatus", "endsc1"}
+
+    def check(self, key):
+        return gen_idlookup.is_description(key, self.KEYS, "dsc", ("alt", "used", "fixed", "dead", "dropped"))
+
+    def test_marker_suffix_is_description(self):
+        self.assertTrue(self.check("bandagedsc"))
+        self.assertTrue(self.check("lcdscreendsc"))
+
+    def test_numbered_variant_needs_existing_base(self):
+        self.assertTrue(self.check("fandsc2"))
+        self.assertFalse(self.check("endsc1"))  # "en" 不是条目，是 end screen 的台词
+
+    def test_modifier_variant(self):
+        self.assertTrue(self.check("traderdscdead"))
+
+    def test_names_containing_dsc_are_kept(self):
+        for key in ("woodscraps", "lcdscreen", "endscreenstatus"):
+            self.assertFalse(self.check(key), key)
+
+
 class SnapshotTests(unittest.TestCase):
     def test_matches_live_snapshot_byte_for_byte(self):
         locale = ROOT / "data" / "locale"
@@ -93,7 +115,7 @@ class SnapshotTests(unittest.TestCase):
             load(locale / "EN.json"),
             load(ROOT / "data" / "overrides.json"),
         )
-        expected = load(ROOT / "data" / "snapshot" / "IDLookup.json")
+        expected = load(ROOT / "data" / "expected" / "IDLookup.json")
         self.assertEqual(gen_idlookup.dumps(document), gen_idlookup.dumps(expected))
         self.assertEqual(warnings, [])
 
@@ -106,7 +128,27 @@ class SnapshotTests(unittest.TestCase):
         counts = {}
         for entry in document["entries"]:
             counts[entry["group"]] = counts.get(entry["group"], 0) + 1
-        self.assertEqual(counts, {"main": 302, "buildings": 146, "moodles": 173, "other": 962})
+        self.assertEqual(counts, {"main": 302, "buildings": 138, "moodles": 172, "other": 961})
+
+    def test_layer_titles_use_real_ids(self):
+        document, _ = gen_idlookup.build(
+            load(ROOT / "data" / "locale" / "zh-CN.json"),
+            load(ROOT / "data" / "locale" / "EN.json"),
+            load(ROOT / "data" / "overrides.json"),
+        )
+        by_id = {e["id"]: e for e in document["entries"]}
+        expected = {
+            "gravel_lands": "砾石荒原", "deeper_gravel_lands": "深层砾石带",
+            "dried_desert": "干旱沙漠", "wasteland": "辐射废土",
+            "overgrown_depths": "深林丛渊", "frozen_chasm": "覆冰断崖",
+            "fungal_pools": "真菌洼地", "crystalline_hollow": "晶蚀空穴",
+            "geothermal_vents": "地热喷口", "where_we_must_reach": "必须抵达之地",
+            "crimson_ascent": "猩红长阶", "earth": "地球",
+        }
+        for layer_id, name in expected.items():
+            self.assertIn(layer_id, by_id, layer_id)
+            self.assertEqual(by_id[layer_id]["name"], name)
+        self.assertFalse([i for i in by_id if i.lower().startswith("layertitle")])
 
 
 if __name__ == "__main__":

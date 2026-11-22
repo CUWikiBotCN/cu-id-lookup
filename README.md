@@ -19,8 +19,11 @@ data/overrides.json ────┘
 ## 规则
 
 1. 只取 `main`、`buildings`、`moodles`、`other` 四个命名空间（`character`/`notes`/`pdaNotes`/`pauseQuotes` 不进入）；
-2. 跳过以 `dsc` 结尾的键——那是对应条目的描述文案，不是条目本身；
-3. 条目形如 `{"id": 键名, "group": 命名空间, "name": 中文名, "aliases": []}`，id 保留原键的大小写；
+2. 跳过描述文案键：以 `dsc` 结尾的（`bandagedsc`），以及 `dsc` 后接数字或修饰词的（`fandsc2`、`traderdscdead`、
+   `spikestabberdscused`、`drillpoddscfixed`、`stalactitedscdropped`、`focuseddscalt`）——后者还要求去掉 `dsc` 后的
+   前缀本身是个条目，否则会误伤 `woodscraps`、`lcdscreen`、`endscreenstatus`、`endsc1…13` 这些「名字里恰好含 dsc」的键；
+3. 条目形如 `{"id": 键名, "group": 命名空间, "name": 中文名, "aliases": []}`，id 保留原键的大小写；地层标题这类
+   需要换 id 的条目在覆盖表里用 `id` 改写（见下）；
 4. 名称取简体中文，缺失或为空时回退英文；
 5. 输出按命名空间分组（main → buildings → moodles → other），组内按 id 升序，紧凑 JSON、无换行；
 6. 只有三种情况写进覆盖表：中文名歧义、别名、语言文件缺键。
@@ -35,7 +38,9 @@ python3 -m unittest discover -s tests -q
 
 `--check` 发现条目增删、改名、别名变化或顺序变化时以非零码退出，并列出差异；没有变化时打印「完全一致」。
 
-当前输出：`main:302 buildings:146 moodles:173 other:962`，共 1583 条、148 595 字节，与线上 rev 16858 逐字节相同。
+当前输出：`main:302 buildings:138 moodles:172 other:961`，共 1573 条、147 397 字节。
+`data/snapshot/IDLookup.json` 是线上旧版（1583 条），`--check` 会列出与它的全部差异；
+`data/expected/IDLookup.json` 是当前期望结果，供回归测试逐字节比对。
 
 ## 覆盖表
 
@@ -66,13 +71,19 @@ python3 -m unittest discover -s tests -q
 ```
 
 - `entries` 的键是 `分组/id`，指向的条目必须存在，否则直接报错（防止改了 id 之后覆盖静默失效）；
-- 可选字段：`name`、`aliases`、`exclude`（置 `true` 表示从输出里剔除）；
+- 可选字段：`id`（换 id）、`name`、`aliases`、`exclude`（置 `true` 表示从输出里剔除）；
+- 换 id 后会检查同组内是否撞车，撞了直接报错；
 - `additions` 用于语言文件里没有、但编辑器需要识别的条目；
 - `note` 是给人看的，写清为什么改：生成器不读它，也不会进入输出 JSON；改 note 不影响结果。
 - 字段名写错（比如把 `aliases` 拼成 `alises`）会直接报错，避免覆盖静默失效；`entries` / `additions` 的其它未知字段同样报错。
 
-现有的 21 条覆盖都是「语言文件名太笼统」造成的：`beartrap`/`fan`/`jumppad`/`piston`/`spikestabber` 在语言文件里都叫「老旧机械」，
-`crystal*` 六个都叫「水晶」，`corpse` 叫「？？？」。编辑器需要能区分它们。
+现有覆盖分三类：
+
+1. **名字太笼统**：`beartrap`/`fan`/`jumppad`/`piston`/`spikestabber` 在语言文件里都叫「老旧机械」，
+   `crystal*` 六个都叫「水晶」，`corpse` 叫「？？？」——编辑器需要能区分，所以改名 + 把原名放进 `aliases`；
+2. **地层标题换 id**：`layertitle1…12` 改成真实地层 id（`gravel_lands`…`earth`），
+   这样和 `{{地层|id=…}}`、`模块:Data/layers` 用的是同一套标识；第 10、12 层同时清理了原值里的字间空格与换行后缀；
+3. **教学关标题剔除**：`layertitletutorial` 是「地球 / 训练实验室」，不是地层 id，留着会和第 12 层重复。
 
 ## 更新流程
 

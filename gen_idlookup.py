@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -22,9 +23,11 @@ GROUPS = ("main", "buildings", "moodles", "other")
 
 # 覆盖表里允许出现哪些键。note 只给人看，其余三个会真正生效；
 # 多写一个（比如把 aliases 拼成 alises）会让覆盖静默失效，所以这里直接报错。
-ENTRY_FIELDS = frozenset({"name", "aliases", "exclude", "note"})
+ENTRY_FIELDS = frozenset({"id", "name", "aliases", "exclude", "note"})
 ADDITION_FIELDS = frozenset({"id", "group", "name", "aliases", "note"})
-TOP_FIELDS = frozenset({"schemaVersion", "note", "groups", "excludeSuffixes", "entries", "additions"})
+TOP_FIELDS = frozenset({
+    "schemaVersion", "note", "groups", "descriptionMarker", "descriptionModifiers", "entries", "additions",
+})
 
 
 def check_fields(where: str, value, allowed: frozenset[str]) -> None:
@@ -45,6 +48,25 @@ def check_aliases(where: str, value) -> list[str]:
     return value
 
 
+def is_description(key: str, keys: set[str], marker: str, modifiers: tuple[str, ...]) -> bool:
+    """判断一个键是不是条目的描述文案。
+
+    规则与踩过的坑：
+    - 以 marker 结尾 → 描述（bandagedsc）；
+    - marker 后面跟数字（fandsc2）或修饰词（dscfixed / dscused / dscdead / dscdropped / dscalt）→ 描述，
+      但要求前缀本身是个条目键，否则会误伤 endsc1..13、woodscraps、lcdscreen、endscreen* 这类名字；
+    - 只是名字里恰好含 dsc 的（woodscraps、lcdscreen、endscreenstatus）保留。
+    """
+    if key.endswith(marker):
+        return True
+
+    match = re.search(rf"{re.escape(marker)}(\d+)$", key)
+    if match or any(key.endswith(marker + word) for word in modifiers):
+        base = key[: key.rfind(marker)]
+        return base in keys
+    return False
+
+
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -58,7 +80,8 @@ def clean_name(value) -> str | None:
 def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[str]]:
     check_fields("覆盖表顶层", config, TOP_FIELDS)
     groups = tuple(config.get("groups") or GROUPS)
-    suffixes = tuple(config.get("excludeSuffixes") or ("dsc",))
+    marker = str(config.get("descriptionMarker") or "dsc")
+    modifiers = tuple(config.get("descriptionModifiers") or ())
     overrides: dict = config.get("entries") or {}
     warnings: list[str] = []
 
@@ -68,8 +91,9 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
         en = locale_en.get(group) or {}
         if not isinstance(zh, dict):
             raise SystemExit(f"语言文件里的 {group} 不是对象")
+        known = set(zh)
         for key, raw in zh.items():
-            if key.endswith(suffixes):
+            if is_description(key, known, marker, modifiers):
                 continue
             name = clean_name(raw) or clean_name(en.get(key))
             if name is None:
@@ -84,6 +108,8 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
         if not any(e["group"] == group and e["id"] == entry_id for e in entries):
             raise SystemExit(f"覆盖表引用了不存在的条目：{key}")
         check_fields(f"entries[{key}]", patch, ENTRY_FIELDS)
+        if "id" in patch:
+            check_text(f"entries[{key}].id", patch["id"])
         if "name" in patch:
             check_text(f"entries[{key}].name", patch["name"])
         if "aliases" in patch:
@@ -99,6 +125,8 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
         if patch.get("exclude"):
             removed.add(index)
             continue
+        if "id" in patch:
+            entry["id"] = patch["id"]
         if "name" in patch:
             entry["name"] = patch["name"]
         if "aliases" in patch:
@@ -121,9 +149,14 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
         )
 
     order = {group: index for index, group in enumerate(groups)}
+    seen: dict[tuple[str, str], str] = {}
     for entry in entries:
         if entry["group"] not in order:
             raise SystemExit(f"条目 {entry['id']} 的分组 {entry['group']} 不在 groups 里")
+        key = (entry["group"], entry["id"])
+        if key in seen:
+            raise SystemExit(f"重命名后出现重复 id：{entry['group']}/{entry['id']}")
+        seen[key] = entry["id"]
     entries.sort(key=lambda e: (order[e["group"]], e["id"]))
 
     return {"schemaVersion": int(config.get("schemaVersion", 1)), "entries": entries}, warnings
@@ -140,9 +173,22 @@ def compare(expected: dict, actual: dict) -> list[str]:
 
     left, right = index(expected), index(actual)
     lines: list[str] = []
+
+    # 先把「同一个名字换了 id」认出来，避免报告成一条缺失 + 一条新增
+    renamed: set[tuple[str, str]] = set()
     for key in sorted(set(left) - set(right)):
+        old = left[key]
+        for new_key in sorted(set(right) - set(left)):
+            new = right[new_key]
+            if new["group"] == old["group"] and new["name"] == old["name"]:
+                lines.append(f"~ 改 id {old['group']}/{old['id']} → {new['id']}")
+                renamed.add(key)
+                renamed.add(new_key)
+                break
+
+    for key in sorted(set(left) - set(right) - renamed):
         lines.append(f"- 缺失 {key[0]}/{key[1]}")
-    for key in sorted(set(right) - set(left)):
+    for key in sorted(set(right) - set(left) - renamed):
         lines.append(f"+ 新增 {key[0]}/{key[1]}")
     for key in sorted(set(left) & set(right)):
         a, b = left[key], right[key]
