@@ -68,7 +68,8 @@ python3 -m unittest discover -s tests -q
 - `entries` 的键是 `分组/id`，指向的条目必须存在，否则直接报错（防止改了 id 之后覆盖静默失效）；
 - 可选字段：`name`、`aliases`、`exclude`（置 `true` 表示从输出里剔除）；
 - `additions` 用于语言文件里没有、但编辑器需要识别的条目；
-- `note` 是给人看的，写清为什么改。
+- `note` 是给人看的，写清为什么改：生成器不读它，也不会进入输出 JSON；改 note 不影响结果。
+- 字段名写错（比如把 `aliases` 拼成 `alises`）会直接报错，避免覆盖静默失效；`entries` / `additions` 的其它未知字段同样报错。
 
 现有的 21 条覆盖都是「语言文件名太笼统」造成的：`beartrap`/`fan`/`jumppad`/`piston`/`spikestabber` 在语言文件里都叫「老旧机械」，
 `crystal*` 六个都叫「水晶」，`corpse` 叫「？？？」。编辑器需要能区分它们。

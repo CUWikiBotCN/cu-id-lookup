@@ -60,6 +60,30 @@ class RuleTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             gen_idlookup.build(self.zh, self.en, {"entries": {"main/nope": {"name": "x"}}})
 
+    def test_unknown_field_is_rejected(self):
+        """把 aliases 拼成 alises 之类的错误必须报错，而不是静默失效。"""
+        with self.assertRaises(SystemExit):
+            gen_idlookup.build(self.zh, self.en, {"entries": {"buildings/fan": {"alises": ["x"]}}})
+        with self.assertRaises(SystemExit):
+            gen_idlookup.build(self.zh, self.en, {"entrys": {}})
+        with self.assertRaises(SystemExit):
+            gen_idlookup.build(self.zh, self.en, {"additions": [{"id": "x", "group": "main",
+                                                                 "name": "X", "alias": ["x"]}]})
+
+    def test_bad_types_are_rejected(self):
+        for patch in ({"name": ""}, {"aliases": "老旧机械"}, {"aliases": [1]}, {"exclude": "yes"}):
+            with self.subTest(patch=patch), self.assertRaises(SystemExit):
+                gen_idlookup.build(self.zh, self.en, {"entries": {"buildings/fan": patch}})
+
+    def test_note_is_documentation_only(self):
+        """note 不参与生成：改 note 不影响输出，也不会进入条目。"""
+        base = {"schemaVersion": 1, "entries": {"buildings/fan": {"name": "风扇", "note": "甲"}}}
+        other = {"schemaVersion": 1, "entries": {"buildings/fan": {"name": "风扇", "note": "乙"}}}
+        left, _ = gen_idlookup.build(self.zh, self.en, base)
+        right, _ = gen_idlookup.build(self.zh, self.en, other)
+        self.assertEqual(gen_idlookup.dumps(left), gen_idlookup.dumps(right))
+        self.assertNotIn("note", gen_idlookup.dumps(left))
+
 
 class SnapshotTests(unittest.TestCase):
     def test_matches_live_snapshot_byte_for_byte(self):

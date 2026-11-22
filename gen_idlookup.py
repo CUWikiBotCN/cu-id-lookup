@@ -20,6 +20,30 @@ from pathlib import Path
 
 GROUPS = ("main", "buildings", "moodles", "other")
 
+# 覆盖表里允许出现哪些键。note 只给人看，其余三个会真正生效；
+# 多写一个（比如把 aliases 拼成 alises）会让覆盖静默失效，所以这里直接报错。
+ENTRY_FIELDS = frozenset({"name", "aliases", "exclude", "note"})
+ADDITION_FIELDS = frozenset({"id", "group", "name", "aliases", "note"})
+TOP_FIELDS = frozenset({"schemaVersion", "note", "groups", "excludeSuffixes", "entries", "additions"})
+
+
+def check_fields(where: str, value, allowed: frozenset[str]) -> None:
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        raise SystemExit(f"{where} 有无法识别的字段：{', '.join(unknown)}（允许：{', '.join(sorted(allowed))}）")
+
+
+def check_text(where: str, value) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise SystemExit(f"{where} 必须是非空字符串")
+    return value
+
+
+def check_aliases(where: str, value) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(a, str) and a.strip() for a in value):
+        raise SystemExit(f"{where} 必须是非空字符串数组")
+    return value
+
 
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -32,6 +56,7 @@ def clean_name(value) -> str | None:
 
 
 def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[str]]:
+    check_fields("覆盖表顶层", config, TOP_FIELDS)
     groups = tuple(config.get("groups") or GROUPS)
     suffixes = tuple(config.get("excludeSuffixes") or ("dsc",))
     overrides: dict = config.get("entries") or {}
@@ -52,10 +77,19 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
                 continue
             entries.append({"id": key, "group": group, "name": name, "aliases": []})
 
-    for key in overrides:
+    for key, patch in overrides.items():
         group, _, entry_id = key.partition("/")
+        if not group or not entry_id:
+            raise SystemExit(f"覆盖表的键要写成「分组/id」：{key}")
         if not any(e["group"] == group and e["id"] == entry_id for e in entries):
             raise SystemExit(f"覆盖表引用了不存在的条目：{key}")
+        check_fields(f"entries[{key}]", patch, ENTRY_FIELDS)
+        if "name" in patch:
+            check_text(f"entries[{key}].name", patch["name"])
+        if "aliases" in patch:
+            check_aliases(f"entries[{key}].aliases", patch["aliases"])
+        if "exclude" in patch and not isinstance(patch["exclude"], bool):
+            raise SystemExit(f"entries[{key}].exclude 必须是 true / false")
 
     removed = set()
     for index, entry in enumerate(entries):
@@ -71,9 +105,12 @@ def build(locale_zh: dict, locale_en: dict, config: dict) -> tuple[dict, list[st
             entry["aliases"] = list(patch["aliases"])
     entries = [e for i, e in enumerate(entries) if i not in removed]
 
-    for addition in config.get("additions") or []:
-        if not addition.get("id") or not addition.get("name"):
-            raise SystemExit("additions 里每一项都要有 id 和 name")
+    for index, addition in enumerate(config.get("additions") or []):
+        check_fields(f"additions[{index}]", addition, ADDITION_FIELDS)
+        check_text(f"additions[{index}].id", addition.get("id"))
+        check_text(f"additions[{index}].group", addition.get("group"))
+        check_text(f"additions[{index}].name", addition.get("name"))
+        check_aliases(f"additions[{index}].aliases", list(addition.get("aliases") or []))
         entries.append(
             {
                 "id": addition["id"],
